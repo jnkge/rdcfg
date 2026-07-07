@@ -4,7 +4,7 @@
   "description": "一键安装管理前端 skills 与 codegraph 代码图谱插件的 CLI",
   "type": "module",
   "bin": {
-    "rdcfg": "./dist/cli.js"
+    "rdcfg": "dist/cli.js"
   },
   "main": "dist/cli.js",
   "files": ["dist", "skills", "README.md"],
