@@ -11,7 +11,7 @@ const SKILLS_DIR = () => join(home(), '.trae', 'skills');
 export const traeHost: Host = {
   id: 'trae',
   displayName: 'Trae',
-  skillsDir: SKILLS_DIR(),
+  get skillsDir() { return SKILLS_DIR(); },
   mcpConfigPaths: () => VARIANT_DIRS.map(mcpPath),
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcpServers'],

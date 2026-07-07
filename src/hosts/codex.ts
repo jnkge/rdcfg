@@ -20,7 +20,7 @@ function toPlain(cfg: McpServerConfig): Record<string, unknown> {
 export const codexHost: Host = {
   id: 'codex',
   displayName: 'Codex CLI',
-  skillsDir: SKILLS_DIR(),
+  get skillsDir() { return SKILLS_DIR(); },
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'toml',
   mcpConfigKey: ['mcp_servers'],

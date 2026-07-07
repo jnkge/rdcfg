@@ -8,19 +8,35 @@ import type { Skill } from '../types.js';
  * 内置 skills 目录。打包后 dist/cli.js 的同级有 skills/，
  * 开发期从项目根 skills/ 读。
  */
+function hasSkillEntries(dir: string): boolean {
+  if (!pathExists(dir)) return false;
+  try {
+    return readdirSync(dir).some((name) => {
+      const sub = join(dir, name);
+      return statSync(sub).isDirectory() && pathExists(join(sub, 'SKILL.md'));
+    });
+  } catch {
+    return false;
+  }
+}
+
 function skillsRoot(): string {
   // ESM 下 __dirname 推导
   const here = dirname(fileURLToPath(import.meta.url));
-  // dist/ 上一级找 skills/；找不到则回退 cwd
+  // 候选 skills 目录：
+  // - 开发期 here = <root>/src/skills → 需要 <root>/skills（上两级再拼 skills）
+  // - 打包后（tsup 扁平输出到 dist/）here = <root>/dist → 需要 <root>/skills（上一级再拼）
+  // 用 hasSkillEntries 校验，避免命中源码目录（src/skills 只含 .ts，无 SKILL.md）
   const candidates = [
-    join(here, '..', 'skills'), // 开发: dist/../skills
-    join(here, '..', '..', 'skills'), // 打包后可能更深
+    join(here, '..', 'skills'), // 打包: dist/../skills
+    join(here, '..', '..', 'skills'), // 开发: src/skills/../../skills
     join(process.cwd(), 'skills'),
   ];
   for (const c of candidates) {
-    if (pathExists(c)) return c;
+    if (hasSkillEntries(c)) return c;
   }
-  return candidates[0];
+  // 兜底：第一个存在的候选
+  return candidates.find((c) => pathExists(c)) ?? candidates[0];
 }
 
 export interface ParsedFrontmatter {

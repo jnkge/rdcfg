@@ -22,7 +22,7 @@ function deepSet(obj: any, keys: string[], value: any): void {
 export const zcodeHost: Host = {
   id: 'zcode',
   displayName: 'ZCode',
-  skillsDir: SKILLS_DIR(),
+  get skillsDir() { return SKILLS_DIR(); },
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcp', 'servers'],

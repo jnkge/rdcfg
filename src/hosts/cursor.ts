@@ -10,7 +10,7 @@ const SKILLS_DIR = () => join(home(), '.cursor', 'skills');
 export const cursorHost: Host = {
   id: 'cursor',
   displayName: 'Cursor',
-  skillsDir: SKILLS_DIR(),
+  get skillsDir() { return SKILLS_DIR(); },
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcpServers'],
