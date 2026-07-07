@@ -14,6 +14,8 @@ function toPlain(cfg: McpServerConfig): Record<string, unknown> {
   if (cfg.args) out.args = cfg.args;
   if (cfg.env) out.env = cfg.env;
   if (cfg.url) out.url = cfg.url;
+  if (cfg.type) out.type = cfg.type;
+  if (cfg.headers) out.headers = cfg.headers;
   return out;
 }
 

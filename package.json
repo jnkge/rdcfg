@@ -7,6 +7,7 @@
     "rdcfg": "./dist/cli.js"
   },
   "main": "dist/cli.js",
+  "files": ["dist", "skills", "README.md"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

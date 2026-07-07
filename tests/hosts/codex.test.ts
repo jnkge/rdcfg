@@ -20,6 +20,24 @@ describe('codexHost', () => {
     expect(doc.mcp_servers.codegraph.args).toEqual(['serve', '--mcp']);
   });
 
+  it('含 type/headers 的配置 TOML 往返后字段保留', async () => {
+    const httpCfg: McpServerConfig = {
+      type: 'http',
+      url: 'https://example.com/mcp',
+      headers: { Authorization: 'Bearer xyz' },
+    };
+    await codexHost.writeMcpServer('remote', httpCfg);
+    // 写回读出应保留 type / url / headers
+    const written = TOML.parse(readFileText(join(home(), '.codex', 'config.toml'))) as any;
+    expect(written.mcp_servers.remote.type).toBe('http');
+    expect(written.mcp_servers.remote.url).toBe('https://example.com/mcp');
+    expect(written.mcp_servers.remote.headers).toEqual({ Authorization: 'Bearer xyz' });
+    // 经 readMcpConfig 读回同样保留
+    const back = await codexHost.readMcpConfig() as any;
+    expect(back.mcp_servers.remote.type).toBe('http');
+    expect(back.mcp_servers.remote.headers.Authorization).toBe('Bearer xyz');
+  });
+
   it('保留已有 TOML 字段（model 等）', async () => {
     const p = join(home(), '.codex', 'config.toml');
     mkdirSync(join(home(), '.codex'), { recursive: true });

@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { home } from '../utils/platform.js';
-import { pathExists, ensureDir, readFileText, atomicWriteFile } from '../utils/fs.js';
+import { pathExists, readFileText, atomicWriteFile } from '../utils/fs.js';
 import JSON5 from 'json5';
 import type { Host, McpServerConfig } from '../types.js';
 

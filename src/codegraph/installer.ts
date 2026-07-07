@@ -1,14 +1,12 @@
-import { run, tryRun, commandExists } from '../utils/exec.js';
-import { allHosts } from '../hosts/index.js';
+import { run, tryRun } from '../utils/exec.js';
 import { getHost } from '../hosts/index.js';
 import { recordCodegraphCli, recordCodegraphConnect, recordCodegraphDisconnect } from '../skills/manifest.js';
 import { connectZCodeCodegraph, disconnectZCodeCodegraph } from './zcode-adapter.js';
-import { isCliInstalled } from './detector.js';
-import type { HostId, McpServerConfig } from '../types.js';
+import { isCliInstalled, getConnectedHosts } from './detector.js';
+import type { HostId } from '../types.js';
 import { log } from '../utils/logger.js';
 
 export const CODEGRAPH_NPM_PKG = '@colbymchenry/codegraph';
-export const CODEGRAPH_MCP: McpServerConfig = { command: 'codegraph', args: ['serve', '--mcp'] };
 
 /** codegraph install 命令原生支持的宿主 id（不含 zcode） */
 const NATIVE_HOSTS: HostId[] = ['claude', 'codex', 'cursor', 'trae'];
@@ -70,7 +68,18 @@ export async function connectHosts(hostIds: HostId[]): Promise<{ hostId: HostId;
 
   // 记录成功的到 manifest
   const okHosts = results.filter(r => r.ok).map(r => r.hostId);
-  if (okHosts.length > 0) recordCodegraphConnect(okHosts);
+  if (okHosts.length > 0) {
+    // 不直接记 nativeRequested，而是回查实际写入的 MCP 配置，确认真实连接状态。
+    let confirmed = okHosts;
+    try {
+      const connected = new Set(await getConnectedHosts());
+      // 回查命中 + ZCode/非原生宿主按执行结果（getConnectedHosts 已覆盖读得到的所有宿主）
+      confirmed = okHosts.filter(id => connected.has(id));
+    } catch {
+      // 回查失败时退回执行结果
+    }
+    if (confirmed.length > 0) recordCodegraphConnect(confirmed);
+  }
 
   return results;
 }

@@ -3,7 +3,6 @@ import { installSkill } from '../skills/installer.js';
 import { recordSkillInstall } from '../skills/manifest.js';
 import { getAvailableHosts, allHosts } from '../hosts/index.js';
 import { installAll } from '../codegraph/installer.js';
-import { detectCodegraph } from '../codegraph/detector.js';
 import { selectSkills, selectHosts, confirmCodegraph, confirmInitProject, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
 import type { HostId } from '../types.js';

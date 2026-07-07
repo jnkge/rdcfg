@@ -2,7 +2,7 @@ import { listSkills } from '../skills/registry.js';
 import { installSkill } from '../skills/installer.js';
 import { recordSkillInstall } from '../skills/manifest.js';
 import { getAvailableHosts, allHosts } from '../hosts/index.js';
-import { selectHosts, selectSkills, p, intro, outro, cancel } from '../ui/prompts.js';
+import { selectHosts, selectSkills, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
 import type { HostId } from '../types.js';
 

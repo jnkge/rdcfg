@@ -1,7 +1,7 @@
 import { removeSkill } from '../skills/installer.js';
 import { removeSkillRecord, getSkillEntry } from '../skills/manifest.js';
 import { allHosts } from '../hosts/index.js';
-import { selectHosts, p, intro, outro, cancel } from '../ui/prompts.js';
+import { selectHosts, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
 import type { HostId } from '../types.js';
 

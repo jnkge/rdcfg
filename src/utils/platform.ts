@@ -1,4 +1,4 @@
-import { homedir, platform } from 'node:os';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 export function home(): string {
