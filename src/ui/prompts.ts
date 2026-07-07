@@ -1,5 +1,7 @@
 import * as p from '@clack/prompts';
 import type { Skill, Host, HostId, Scope } from '../types.js';
+import { listLanguages } from '../skills/languages.js';
+import type { Language } from '../skills/languages.js';
 
 export { p };
 
@@ -63,6 +65,22 @@ export async function selectScope(): Promise<Scope | null> {
   });
   if (p.isCancel(ans)) return null;
   return ans as Scope;
+}
+
+/** 单选语言；hint 显示该语言下 skill 数量。始终列出全部 5 种。 */
+export async function selectLanguage(): Promise<Language | null> {
+  const langs = listLanguages();
+  const ans = await p.select({
+    message: '选择语言',
+    options: langs.map(l => ({
+      value: l.id,
+      label: l.label,
+      hint: l.count > 0 ? `${l.count} 个 skill` : '敬请期待',
+    })),
+    initialValue: 'frontend' as Language,
+  });
+  if (p.isCancel(ans)) return null;
+  return ans as Language;
 }
 
 export async function confirmCodegraph(): Promise<boolean | null> {
