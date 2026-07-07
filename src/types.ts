@@ -3,6 +3,7 @@ export interface Skill {
   name: string;
   description: string;
   category: string;
+  language: string;
   source: string;
   dir: string;
 }
