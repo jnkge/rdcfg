@@ -56,6 +56,21 @@ describe('E2E: skills + codegraph 全流程（mock codegraph）', () => {
     expect(skills.map(s => s.name)).toContain('vue-best-practices');
   });
 
+  it('listSkills 含 15 个 skill，覆盖 5 种语言', () => {
+    const skills = listSkills();
+    expect(skills).toHaveLength(15);
+    const langs = new Set(skills.map(s => s.language));
+    expect(langs).toEqual(new Set(['frontend', 'python', 'go', 'php', 'flutter']));
+  });
+
+  it('每个新语言至少有 3 个 skill', () => {
+    const skills = listSkills();
+    for (const lang of ['python', 'go', 'php', 'flutter'] as const) {
+      const count = skills.filter(s => s.language === lang).length;
+      expect(count, `${lang} 应有 3 个 skill`).toBe(3);
+    }
+  });
+
   it('装 skill 到 zcode + claude，再读配置验证', () => {
     const results = installSkill('vue-best-practices', ['zcode', 'claude']);
     expect(results.every(r => r.outcome === 'installed')).toBe(true);
