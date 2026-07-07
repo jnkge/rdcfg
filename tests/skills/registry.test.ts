@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFrontmatter } from '../../src/skills/registry.js';
+import { parseFrontmatter, listSkills } from '../../src/skills/registry.js';
 
 describe('parseFrontmatter', () => {
   it('解析标准 frontmatter', () => {
@@ -44,5 +44,17 @@ source: github.com/golang-standards/project-layout
 # Body`;
     const { data } = parseFrontmatter(text);
     expect(data.language).toBe('go');
+  });
+});
+
+describe('listSkills language', () => {
+  it('现有 3 个前端 skill 的 language === frontend', () => {
+    const skills = listSkills();
+    const names = ['element-plus-vue3', 'frontend-design', 'vue-best-practices'];
+    for (const name of names) {
+      const s = skills.find(x => x.name === name);
+      expect(s, `skill ${name} 应存在`).toBeDefined();
+      expect(s!.language).toBe('frontend');
+    }
   });
 });

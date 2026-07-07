@@ -2,6 +2,7 @@
 name: element-plus-vue3
 description: Element Plus + Vue 3 组件库使用指南，含主题定制与按需引入。
 category: framework
+language: frontend
 source: https://github.com/community/element-plus-vue3
 ---
 

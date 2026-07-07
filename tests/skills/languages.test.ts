@@ -17,7 +17,7 @@ describe('languages', () => {
     expect(list).toHaveLength(5);
     expect(list.map(x => x.id)).toEqual(['frontend', 'python', 'go', 'php', 'flutter']);
     const fe = list.find(x => x.id === 'frontend')!;
-    expect(fe.count).toBeGreaterThanOrEqual(0); // Task 3 后改回 >= 3
+    expect(fe.count).toBeGreaterThanOrEqual(3);
     for (const x of list) expect(x.label).toBeTruthy();
   });
 });

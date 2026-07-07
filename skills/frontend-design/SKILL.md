@@ -2,6 +2,7 @@
 name: frontend-design
 description: 前端设计模式与组件最佳实践指导，覆盖布局、配色、响应式。
 category: design
+language: frontend
 source: https://github.com/community/frontend-design
 ---
 
