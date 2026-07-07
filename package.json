@@ -1,0 +1,33 @@
+{
+  "name": "rdcfg",
+  "version": "0.1.0",
+  "description": "一键安装管理前端 skills 与 codegraph 代码图谱插件的 CLI",
+  "type": "module",
+  "bin": {
+    "rdcfg": "./dist/cli.js"
+  },
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "@iarna/toml": "^2.2.5",
+    "commander": "^12.0.0",
+    "execa": "^9.0.0",
+    "json5": "^2.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  }
+}
