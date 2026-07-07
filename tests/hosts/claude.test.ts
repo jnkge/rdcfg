@@ -58,4 +58,8 @@ describe('claudeHost', () => {
   it('removeMcpServer 无文件不报错', async () => {
     await expect(claudeHost.removeMcpServer('codegraph')).resolves.toBeUndefined();
   });
+
+  it('projectSkillsDir 指向 <cwd>/.claude/skills', () => {
+    expect(claudeHost.projectSkillsDir!('/proj')).toBe(join('/proj', '.claude', 'skills'));
+  });
 });

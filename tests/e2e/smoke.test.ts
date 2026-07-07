@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { join } from 'node:path';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { useTmpHome } from '../helpers/tmp-home.js';
 import { home } from '../../src/utils/platform.js';
 
@@ -60,6 +61,15 @@ describe('E2E: skills + codegraph 全流程（mock codegraph）', () => {
     expect(results.every(r => r.outcome === 'installed')).toBe(true);
     expect(existsSync(join(home(), '.zcode', 'skills', 'vue-best-practices', 'SKILL.md'))).toBe(true);
     expect(existsSync(join(home(), '.claude', 'skills', 'vue-best-practices', 'SKILL.md'))).toBe(true);
+  });
+
+  it('project scope 装入当前项目目录而非家目录', () => {
+    const projectCwd = mkdtempSync(join(tmpdir(), 'rdcfg-e2e-proj-'));
+    const results = installSkill('vue-best-practices', ['zcode'], { scope: 'project', cwd: projectCwd });
+    expect(results.every(r => r.outcome === 'installed')).toBe(true);
+    expect(existsSync(join(projectCwd, '.zcode', 'skills', 'vue-best-practices', 'SKILL.md'))).toBe(true);
+    // 全局目录不应有
+    expect(existsSync(join(home(), '.zcode', 'skills', 'vue-best-practices'))).toBe(false);
   });
 
   it('连接 codegraph 到 zcode + claude，配置已写入', async () => {

@@ -37,4 +37,8 @@ describe('cursorHost', () => {
     expect(obj.mcpServers.codegraph).toBeUndefined();
     expect(obj.mcpServers.keep).toBeDefined();
   });
+
+  it('projectSkillsDir 指向 <cwd>/.cursor/skills', () => {
+    expect(cursorHost.projectSkillsDir!('/proj')).toBe(join('/proj', '.cursor', 'skills'));
+  });
 });

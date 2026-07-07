@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts';
-import type { Skill, Host, HostId } from '../types.js';
+import type { Skill, Host, HostId, Scope } from '../types.js';
 
 export { p };
 
@@ -49,6 +49,20 @@ export async function selectHosts(hosts: Host[], defaultIds: HostId[] = []): Pro
   });
   if (p.isCancel(selected)) return null;
   return selected as HostId[];
+}
+
+/** 单选安装作用域：全局家目录 vs 当前项目 */
+export async function selectScope(): Promise<Scope | null> {
+  const ans = await p.select({
+    message: '安装作用域',
+    options: [
+      { value: 'global' as Scope, label: '全局', hint: '所有项目共享 (~/.xxx/skills)' },
+      { value: 'project' as Scope, label: '当前项目', hint: '随项目走，可 commit (<cwd>/.xxx/skills)' },
+    ],
+    initialValue: 'global' as Scope,
+  });
+  if (p.isCancel(ans)) return null;
+  return ans as Scope;
 }
 
 export async function confirmCodegraph(): Promise<boolean | null> {

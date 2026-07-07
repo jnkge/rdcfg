@@ -3,12 +3,16 @@ import { installSkill } from '../skills/installer.js';
 import { recordSkillInstall } from '../skills/manifest.js';
 import { getAvailableHosts, allHosts } from '../hosts/index.js';
 import { installAll } from '../codegraph/installer.js';
-import { selectSkills, selectHosts, confirmCodegraph, confirmInitProject, intro, outro, cancel } from '../ui/prompts.js';
+import { selectSkills, selectHosts, selectScope, confirmCodegraph, confirmInitProject, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
-import type { HostId } from '../types.js';
+import type { HostId, Scope } from '../types.js';
 
 export async function runWizard(): Promise<void> {
   intro();
+
+  // 0. 安装作用域
+  const scope: Scope | null = await selectScope();
+  if (scope === null) return cancel('已取消');
 
   // 1. skills 选择
   const skills = listSkills();
@@ -36,15 +40,16 @@ export async function runWizard(): Promise<void> {
   // 4. 执行 skills 安装
   if (selectedSkills.length > 0) {
     log.step('安装 skills');
+    const scopeTag = scope === 'project' ? '[project] ' : '';
     for (const name of selectedSkills) {
       try {
-        const results = installSkill(name, hostIds);
+        const results = installSkill(name, hostIds, { scope });
         for (const r of results) {
-          if (r.outcome === 'installed') log.ok(`${name} → ${r.hostId}`);
-          else if (r.outcome === 'skipped-same') log.info(`${name} → ${r.hostId} 已是最新`);
-          else if (r.outcome === 'skipped-modified') log.warn(`${name} → ${r.hostId} 已修改跳过`);
+          if (r.outcome === 'installed') log.ok(`${scopeTag}${name} → ${r.hostId}`);
+          else if (r.outcome === 'skipped-same') log.info(`${scopeTag}${name} → ${r.hostId} 已是最新`);
+          else if (r.outcome === 'skipped-modified') log.warn(`${scopeTag}${name} → ${r.hostId} 已修改跳过`);
         }
-        recordSkillInstall(name, hostIds);
+        recordSkillInstall(name, hostIds, { scope });
       } catch (e: any) {
         log.fail(`${name}: ${e?.message || e}`);
       }
@@ -58,5 +63,8 @@ export async function runWizard(): Promise<void> {
   }
 
   // 6. 汇总
-  outro('完成。重启对应宿主以加载 skills 与 MCP server。');
+  const tail = scope === 'project'
+    ? '完成。skills 已装入当前项目目录，可随项目 commit。重启对应宿主以加载。'
+    : '完成。重启对应宿主以加载 skills 与 MCP server。';
+  outro(tail);
 }

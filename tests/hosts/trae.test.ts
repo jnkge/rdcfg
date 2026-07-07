@@ -53,4 +53,8 @@ describe('traeHost', () => {
     expect(a.mcpServers.codegraph).toBeUndefined();
     expect(b.mcpServers.codegraph).toBeUndefined();
   });
+
+  it('projectSkillsDir 指向 <cwd>/.trae/skills', () => {
+    expect(traeHost.projectSkillsDir!('/proj')).toBe(join('/proj', '.trae', 'skills'));
+  });
 });

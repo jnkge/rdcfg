@@ -46,4 +46,8 @@ describe('zcodeHost', () => {
     expect(obj.mcp.servers.codegraph).toBeUndefined();
     expect(obj.mcp.servers['zai-mcp']).toBeDefined();
   });
+
+  it('projectSkillsDir 指向 <cwd>/.zcode/skills', () => {
+    expect(zcodeHost.projectSkillsDir!('/proj')).toBe(join('/proj', '.zcode', 'skills'));
+  });
 });

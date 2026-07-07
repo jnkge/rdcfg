@@ -2,6 +2,16 @@ import { listSkills } from '../skills/registry.js';
 import { getSkillEntry } from '../skills/manifest.js';
 import { log } from '../utils/logger.js';
 
+/** 合并显示全局清单 + 当前项目清单的安装标记 */
+function installMark(name: string): string {
+  const g = getSkillEntry(name, { scope: 'global' });
+  const p = getSkillEntry(name, { scope: 'project' });
+  const parts: string[] = [];
+  if (g) parts.push(`[global] ${g.hosts.join(', ')}`);
+  if (p) parts.push(`[project] ${p.hosts.join(', ')}`);
+  return parts.length > 0 ? ` (已装: ${parts.join(' | ')})` : '';
+}
+
 export function runList(): void {
   const skills = listSkills();
   if (skills.length === 0) {
@@ -17,9 +27,7 @@ export function runList(): void {
   for (const [cat, items] of byCat) {
     console.log(`\n[${cat}]`);
     for (const s of items) {
-      const entry = getSkillEntry(s.name);
-      const installedMark = entry ? ` (已装: ${entry.hosts.join(', ')})` : '';
-      console.log(`  ${s.name}${installedMark}`);
+      console.log(`  ${s.name}${installMark(s.name)}`);
       if (s.description) console.log(`    ${s.description}`);
     }
   }

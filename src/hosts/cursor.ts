@@ -6,11 +6,13 @@ import type { Host, McpServerConfig } from '../types.js';
 
 const CONFIG_PATH = () => join(home(), '.cursor', 'mcp.json');
 const SKILLS_DIR = () => join(home(), '.cursor', 'skills');
+const PROJECT_SKILLS_DIR = (cwd: string) => join(cwd, '.cursor', 'skills');
 
 export const cursorHost: Host = {
   id: 'cursor',
   displayName: 'Cursor',
   get skillsDir() { return SKILLS_DIR(); },
+  projectSkillsDir: (cwd: string) => PROJECT_SKILLS_DIR(cwd),
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcpServers'],

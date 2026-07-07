@@ -6,6 +6,7 @@ import type { Host, McpServerConfig } from '../types.js';
 
 const CONFIG_PATH = () => join(home(), '.claude.json');
 const SKILLS_DIR = () => join(home(), '.claude', 'skills');
+const PROJECT_SKILLS_DIR = (cwd: string) => join(cwd, '.claude', 'skills');
 
 function deepGet(obj: any, keys: string[]): any {
   return keys.reduce((acc, k) => (acc == null ? acc : acc[k]), obj);
@@ -23,6 +24,7 @@ export const claudeHost: Host = {
   id: 'claude',
   displayName: 'Claude Code',
   get skillsDir() { return SKILLS_DIR(); },
+  projectSkillsDir: (cwd: string) => PROJECT_SKILLS_DIR(cwd),
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcpServers'],

@@ -4,17 +4,24 @@ import { getAvailableHosts, allHosts } from '../hosts/index.js';
 import { getSkillEntry } from '../skills/manifest.js';
 import { log } from '../utils/logger.js';
 import { selectHosts, intro, outro, cancel } from '../ui/prompts.js';
-import type { HostId } from '../types.js';
+import type { HostId, Scope } from '../types.js';
 
-export async function runUpdate(names: string[], hostIds?: HostId[]): Promise<void> {
+export interface UpdateOptions {
+  hosts?: HostId[];
+  scope?: Scope;
+  cwd?: string;
+}
+
+export async function runUpdate(names: string[], opts: UpdateOptions = {}): Promise<void> {
   let targetNames = names;
-  let targetHosts = hostIds;
+  let targetHosts = opts.hosts;
+  const mopts = { scope: opts.scope, cwd: opts.cwd };
   const interactive = targetNames.length === 0 || !targetHosts;
   if (interactive) {
     intro();
     if (targetNames.length === 0) {
       // 默认更新所有已安装的
-      const installed = listSkills().filter(s => getSkillEntry(s.name));
+      const installed = listSkills().filter(s => getSkillEntry(s.name, mopts));
       targetNames = installed.map(s => s.name);
       if (targetNames.length === 0) { log.warn('没有已安装的 skill 可更新'); outro('完成'); return; }
     }
@@ -27,7 +34,7 @@ export async function runUpdate(names: string[], hostIds?: HostId[]): Promise<vo
     }
   }
   for (const name of targetNames) {
-    const results = updateSkill(name, targetHosts!);
+    const results = updateSkill(name, targetHosts!, mopts);
     for (const r of results) {
       if (r.outcome === 'overwritten') log.ok(`${name} → ${r.hostId} 已更新（备份: ${r.backupPath}）`);
       else if (r.outcome === 'installed') log.ok(`${name} → ${r.hostId} 已安装`);

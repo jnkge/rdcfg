@@ -7,11 +7,13 @@ import type { Host, McpServerConfig } from '../types.js';
 const VARIANT_DIRS = ['Trae CN', 'TRAE SOLO CN'];
 const mcpPath = (variant: string) => join(appData(), variant, 'User', 'mcp.json');
 const SKILLS_DIR = () => join(home(), '.trae', 'skills');
+const PROJECT_SKILLS_DIR = (cwd: string) => join(cwd, '.trae', 'skills');
 
 export const traeHost: Host = {
   id: 'trae',
   displayName: 'Trae',
   get skillsDir() { return SKILLS_DIR(); },
+  projectSkillsDir: (cwd: string) => PROJECT_SKILLS_DIR(cwd),
   mcpConfigPaths: () => VARIANT_DIRS.map(mcpPath),
   mcpConfigFormat: 'json',
   mcpConfigKey: ['mcpServers'],

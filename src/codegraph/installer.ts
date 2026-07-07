@@ -12,6 +12,49 @@ export const CODEGRAPH_NPM_PKG = '@colbymchenry/codegraph';
 const NATIVE_HOSTS: HostId[] = ['claude', 'codex', 'cursor', 'trae'];
 
 /**
+ * 根据 npm/系统错误特征给出针对性建议。
+ * 匹配 stdout+stderr 合并文本，命中即返回提示（多条件时取首个）。
+ */
+function diagnoseNpmError(combined: string): string | null {
+  const text = combined.toLowerCase();
+  // 权限：EACCES / EPERM，常见于系统级 prefix（/usr/local）
+  if (text.includes('eacces') || text.includes('eperm')) {
+    return '权限不足（EACCES）。建议：改用非系统 npm prefix，或加 sudo / 以管理员运行。' +
+      '\n  - 设置用户级 prefix: npm config set prefix ~/.npm-global（并加入 PATH）' +
+      `\n  - 或直接: sudo npm i -g ${CODEGRAPH_NPM_PKG}`;
+  }
+  // 网络：超时 / 连接重置 / DNS
+  if (text.includes('etimedout') || text.includes('econnreset') || text.includes('enotfound') || text.includes('eai_again')) {
+    return '网络异常。建议：检查网络/代理，或切换 registry:' +
+      '\n  - npm config set registry https://registry.npmmirror.com';
+  }
+  // 包名/registry：404 找不到
+  if (text.includes('404') || (text.includes('not found') && text.includes(CODEGRAPH_NPM_PKG.toLowerCase()))) {
+    return `未在 registry 找到包 ${CODEGRAPH_NPM_PKG}（404）。确认包名/版本，或换 registry。`;
+  }
+  // 磁盘空间
+  if (text.includes('enospc') || text.includes('no space left')) {
+    return '磁盘空间不足（ENOSPC）。请清理后重试。';
+  }
+  // codegraph 不在 PATH（install 成功但子进程找不到）
+  if (text.includes('enoent') && text.includes('codegraph')) {
+    return '安装可能成功但 codegraph 未在 PATH。请重开终端使 PATH 生效，或检查 npm bin -g 目录是否在 PATH 中。';
+  }
+  return null;
+}
+
+/**
+ * 把 tryRun 的完整输出（stdout + stderr + exitCode）拼成可读字符串。
+ */
+function formatRunFailure(stdout: string, stderr: string, exitCode: number | null): string {
+  const parts: string[] = [];
+  if (exitCode !== null) parts.push(`退出码 ${exitCode}`);
+  const detail = [stdout, stderr].filter(Boolean).join('\n').trim();
+  if (detail) parts.push(`输出:\n${detail}`);
+  return parts.length > 0 ? parts.join(' | ') : '未知错误';
+}
+
+/**
  * 安装 codegraph CLI（npm i -g）。
  */
 export async function installCli(): Promise<{ ok: boolean; message: string }> {
@@ -24,10 +67,18 @@ export async function installCli(): Promise<{ ok: boolean; message: string }> {
     recordCodegraphCli(true);
     return { ok: true, message: 'codegraph CLI 安装成功' };
   } catch (e: any) {
-    return {
-      ok: false,
-      message: `npm 全局安装失败：${e?.message || e}\n请手动运行: npm i -g ${CODEGRAPH_NPM_PKG}`,
-    };
+    const stdout: string = e?.stdout || '';
+    const stderr: string = e?.stderr || '';
+    const combined = `${stdout}\n${stderr}`;
+    const hint = diagnoseNpmError(combined);
+    const lines = [
+      `npm 全局安装失败${e?.exitCode !== undefined ? `（退出码 ${e.exitCode}）` : ''}。`,
+    ];
+    const detail = combined.trim();
+    if (detail) lines.push(`--- npm 输出 ---\n${detail}`);
+    if (hint) lines.push(`--- 建议 ---\n${hint}`);
+    lines.push(`可手动重试: npm i -g ${CODEGRAPH_NPM_PKG}`);
+    return { ok: false, message: lines.join('\n') };
   }
 }
 
@@ -49,9 +100,10 @@ export async function connectHosts(hostIds: HostId[]): Promise<{ hostId: HostId;
         results.push({ hostId: id, ok: true, message: '已通过 codegraph install 连接' });
       }
     } else {
-      // 失败时逐个标记，但不阻塞
+      // 失败时把完整输出贴到每个原生宿主上（codegraph install 一次操作所有原生宿主，无法逐个定位）
+      const detail = formatRunFailure(r.stdout, r.stderr, r.exitCode);
       for (const id of nativeRequested) {
-        results.push({ hostId: id, ok: false, message: `codegraph install 失败: ${r.stderr || '未知错误'}` });
+        results.push({ hostId: id, ok: false, message: `codegraph install 失败: ${detail}` });
       }
     }
   }
@@ -89,7 +141,8 @@ export async function connectHosts(hostIds: HostId[]): Promise<{ hostId: HostId;
  */
 export async function initProject(cwd: string = process.cwd()): Promise<{ ok: boolean; message: string }> {
   const r = await tryRun('codegraph', ['init'], { cwd });
-  return { ok: r.success, message: r.success ? 'codegraph init 完成' : `init 失败: ${r.stderr}` };
+  if (r.success) return { ok: true, message: 'codegraph init 完成' };
+  return { ok: false, message: `init 失败: ${formatRunFailure(r.stdout, r.stderr, r.exitCode)}` };
 }
 
 /**
@@ -105,10 +158,8 @@ export async function uninstallCodegraph(hostIds: HostId[]): Promise<{ ok: boole
   // 3. npm uninstall -g（触发 preuninstall 清理原生宿主配置）
   const r = await tryRun('npm', ['uninstall', '-g', CODEGRAPH_NPM_PKG]);
   recordCodegraphCli(false);
-  return {
-    ok: r.success,
-    message: r.success ? 'codegraph 已卸载，宿主配置已清理' : `卸载失败: ${r.stderr}`,
-  };
+  if (r.success) return { ok: true, message: 'codegraph 已卸载，宿主配置已清理' };
+  return { ok: false, message: `卸载失败: ${formatRunFailure(r.stdout, r.stderr, r.exitCode)}` };
 }
 
 /**

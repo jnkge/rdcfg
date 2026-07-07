@@ -3,10 +3,16 @@ import { removeSkillRecord, getSkillEntry } from '../skills/manifest.js';
 import { allHosts } from '../hosts/index.js';
 import { selectHosts, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
-import type { HostId } from '../types.js';
+import type { HostId, Scope } from '../types.js';
 
-export async function runRemove(names: string[], hostIds?: HostId[]): Promise<void> {
-  let targetHosts = hostIds;
+export interface RemoveOptions {
+  hosts?: HostId[];
+  scope?: Scope;
+  cwd?: string;
+}
+
+export async function runRemove(names: string[], opts: RemoveOptions = {}): Promise<void> {
+  let targetHosts = opts.hosts;
   const interactive = !targetHosts;
   if (interactive) {
     intro();
@@ -14,22 +20,23 @@ export async function runRemove(names: string[], hostIds?: HostId[]): Promise<vo
     if (selected === null) return cancel('已取消');
     targetHosts = selected;
   }
+  const mopts = { scope: opts.scope, cwd: opts.cwd };
   for (const name of names) {
-    const results = removeSkill(name, targetHosts!);
+    const results = removeSkill(name, targetHosts!, mopts);
     for (const r of results) {
       r.removed ? log.ok(`${name} → ${r.hostId} 已移除`) : log.info(`${name} → ${r.hostId} 不存在`);
     }
     // 更新清单：从这些宿主移除记录
-    const entry = getSkillEntry(name);
+    const entry = getSkillEntry(name, mopts);
     if (entry) {
       const remaining = entry.hosts.filter(h => !targetHosts!.includes(h));
-      if (remaining.length === 0) removeSkillRecord(name);
+      if (remaining.length === 0) removeSkillRecord(name, mopts);
       else {
-        // 重写记录
-        const { recordSkillInstall } = await import('../skills/manifest.js');
-        // 直接清空再记剩余不优雅；manifest 模块后续可加 setSkillHosts，此处简化用 removeSkillRecord + 重记
-        removeSkillRecord(name);
-        if (remaining.length > 0) recordSkillInstall(name, remaining);
+        removeSkillRecord(name, mopts);
+        if (remaining.length > 0) {
+          const { recordSkillInstall } = await import('../skills/manifest.js');
+          recordSkillInstall(name, remaining, mopts);
+        }
       }
     }
   }

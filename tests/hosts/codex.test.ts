@@ -59,4 +59,8 @@ describe('codexHost', () => {
     expect(doc.mcp_servers.codegraph).toBeUndefined();
     expect(doc.mcp_servers.keep).toBeDefined();
   });
+
+  it('projectSkillsDir 指向 <cwd>/.codex/skills', () => {
+    expect(codexHost.projectSkillsDir!('/proj')).toBe(join('/proj', '.codex', 'skills'));
+  });
 });

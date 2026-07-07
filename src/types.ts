@@ -20,11 +20,17 @@ export interface McpServerConfig {
 /** 宿主 ID 联合类型 */
 export type HostId = 'claude' | 'codex' | 'cursor' | 'zcode' | 'trae';
 
+/** 安装作用域：global=家目录（所有项目共享）；project=当前项目目录（随项目走，可 commit） */
+export type Scope = 'global' | 'project';
+
 /** 宿主抽象接口 —— skills 与 codegraph 共用 */
 export interface Host {
   readonly id: HostId;
   readonly displayName: string;
+  /** 全局 skills 目录（~/.xxx/skills） */
   readonly skillsDir: string;
+  /** 项目级 skills 目录（<cwd>/.xxx/skills）；未实现的宿主可省略 */
+  projectSkillsDir?(cwd: string): string;
   /** MCP 配置文件候选路径（Trae 返回多个变体；其他返回单元素） */
   mcpConfigPaths(): string[];
   readonly mcpConfigFormat: 'json' | 'toml';
@@ -42,6 +48,10 @@ export interface ManifestSkillEntry {
   name: string;
   hosts: HostId[];
   installedAt: string;
+  /** 安装作用域；旧清单无此字段时按 'global' 处理 */
+  scope?: Scope;
+  /** 项目级安装时记录的项目绝对路径，便于追溯 */
+  projectPath?: string;
 }
 
 /** rdcfg 清单条目：codegraph 连接状态 */

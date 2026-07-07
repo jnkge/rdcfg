@@ -6,6 +6,7 @@ import type { Host, McpServerConfig } from '../types.js';
 
 const CONFIG_PATH = () => join(home(), '.codex', 'config.toml');
 const SKILLS_DIR = () => join(home(), '.codex', 'skills');
+const PROJECT_SKILLS_DIR = (cwd: string) => join(cwd, '.codex', 'skills');
 
 /** 把 McpServerConfig 转成 TOML 友好的普通对象（去 undefined） */
 function toPlain(cfg: McpServerConfig): Record<string, unknown> {
@@ -23,6 +24,7 @@ export const codexHost: Host = {
   id: 'codex',
   displayName: 'Codex CLI',
   get skillsDir() { return SKILLS_DIR(); },
+  projectSkillsDir: (cwd: string) => PROJECT_SKILLS_DIR(cwd),
   mcpConfigPaths: () => [CONFIG_PATH()],
   mcpConfigFormat: 'toml',
   mcpConfigKey: ['mcp_servers'],

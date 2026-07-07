@@ -26,27 +26,30 @@ program
   .description('安装指定 skill（省略则交互选择）')
   .option('-H, --hosts <ids>', '目标宿主，逗号分隔（zcode,claude,codex,cursor,trae）')
   .option('-f, --force', '覆盖已修改的 skill')
-  .action(async (skills: string[], opts: { hosts?: string; force?: boolean }) => {
+  .option('-p, --project', '装入当前项目目录（默认装到全局 ~/.xxx/skills）')
+  .action(async (skills: string[], opts: { hosts?: string; force?: boolean; project?: boolean }) => {
     const hostIds = opts.hosts ? opts.hosts.split(',').map(s => s.trim()) as HostId[] : undefined;
-    await runAdd(skills, { hosts: hostIds, force: opts.force });
+    await runAdd(skills, { hosts: hostIds, force: opts.force, scope: opts.project ? 'project' : 'global' });
   });
 
 program
   .command('remove [skills...]')
   .description('卸载指定 skill')
   .option('-H, --hosts <ids>', '目标宿主，逗号分隔')
-  .action(async (skills: string[], opts: { hosts?: string }) => {
+  .option('-p, --project', '从当前项目目录卸载')
+  .action(async (skills: string[], opts: { hosts?: string; project?: boolean }) => {
     const hostIds = opts.hosts ? opts.hosts.split(',').map(s => s.trim()) as HostId[] : undefined;
-    await runRemove(skills, hostIds);
+    await runRemove(skills, { hosts: hostIds, scope: opts.project ? 'project' : 'global' });
   });
 
 program
   .command('update [skills...]')
   .description('更新 skill（默认全部已安装的）')
   .option('-H, --hosts <ids>', '目标宿主，逗号分隔')
-  .action(async (skills: string[], opts: { hosts?: string }) => {
+  .option('-p, --project', '更新当前项目目录内的 skill')
+  .action(async (skills: string[], opts: { hosts?: string; project?: boolean }) => {
     const hostIds = opts.hosts ? opts.hosts.split(',').map(s => s.trim()) as HostId[] : undefined;
-    await runUpdate(skills, hostIds);
+    await runUpdate(skills, { hosts: hostIds, scope: opts.project ? 'project' : 'global' });
   });
 
 const cg = program.command('codegraph').description('管理 codegraph 代码图谱插件');
