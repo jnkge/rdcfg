@@ -31,4 +31,18 @@ source: https://example.com
     const { data } = parseFrontmatter('---\nname: "quoted"\n---\n');
     expect(data.name).toBe('quoted');
   });
+
+  it('解析 language 字段', () => {
+    const text = `---
+name: go-project-layout
+description: Go 项目布局
+category: design
+language: go
+source: github.com/golang-standards/project-layout
+---
+
+# Body`;
+    const { data } = parseFrontmatter(text);
+    expect(data.language).toBe('go');
+  });
 });

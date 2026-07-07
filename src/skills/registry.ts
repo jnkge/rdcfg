@@ -77,6 +77,7 @@ export function listSkills(): Skill[] {
       name: data.name || name,
       description: data.description || '',
       category: data.category || 'other',
+      language: data.language || 'other',
       source: data.source || '',
       dir,
     });
