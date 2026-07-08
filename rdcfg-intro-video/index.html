@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      @font-face {
+        font-family: "Microsoft YaHei UI";
+        src: local("Microsoft YaHei UI");
+      }
+
+      @font-face {
+        font-family: "Microsoft YaHei";
+        src: local("Microsoft YaHei");
+      }
+
+      @font-face {
+        font-family: "Cascadia Code";
+        src: local("Cascadia Code");
+      }
+
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: local("JetBrains Mono");
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #07192f;
+      }
+
+      body {
+        color: #f2f6ee;
+        font-family: "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+      }
+
+      code,
+      .mono,
+      .command,
+      .frame-label {
+        font-family: "Cascadia Code", "JetBrains Mono", monospace;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 15% 18%, rgba(99, 240, 138, 0.16), rgba(99, 240, 138, 0) 28%),
+          radial-gradient(circle at 80% 84%, rgba(255, 206, 106, 0.13), rgba(255, 206, 106, 0) 30%),
+          #07192f;
+      }
+
+      .background-grid {
+        position: absolute;
+        inset: -80px;
+        opacity: 0.2;
+        background-image:
+          linear-gradient(rgba(142, 178, 204, 0.16) 1px, rgba(0, 0, 0, 0) 1px),
+          linear-gradient(90deg, rgba(142, 178, 204, 0.16) 1px, rgba(0, 0, 0, 0) 1px);
+        background-size: 72px 72px;
+        transform: rotate(-1.5deg);
+      }
+
+      .ghost-word {
+        position: absolute;
+        right: -130px;
+        bottom: -70px;
+        color: rgba(242, 246, 238, 0.035);
+        font-size: 250px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        line-height: 0.9;
+      }
+
+      .ghost-word::before {
+        content: "RDCFG";
+      }
+
+      .topline {
+        position: absolute;
+        left: 70px;
+        right: 70px;
+        top: 42px;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #8eb2cc;
+        font-size: 20px;
+        letter-spacing: 0.04em;
+      }
+
+      .brand-mark {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .brand-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #63f08a;
+        box-shadow: 0 0 28px rgba(99, 240, 138, 0.72);
+      }
+
+      .duration-mark {
+        font-family: "Cascadia Code", "JetBrains Mono", monospace;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: 610px minmax(0, 1fr);
+        gap: 52px;
+        width: 100%;
+        height: 100%;
+        padding: 128px 88px 86px 96px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .copy-panel {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+        z-index: 6;
+      }
+
+      .eyebrow {
+        width: fit-content;
+        border: 1px solid rgba(99, 240, 138, 0.46);
+        border-radius: 999px;
+        padding: 10px 18px;
+        color: #63f08a;
+        background: rgba(99, 240, 138, 0.08);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      .scene-title {
+        max-width: 590px;
+        color: #f2f6ee;
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.04;
+        letter-spacing: 0.01em;
+      }
+
+      .scene-title.tight {
+        font-size: 66px;
+      }
+
+      .scene-copy {
+        max-width: 560px;
+        color: #c5d7df;
+        font-size: 29px;
+        font-weight: 350;
+        line-height: 1.45;
+      }
+
+      .command {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 14px;
+        border: 1px solid rgba(255, 206, 106, 0.48);
+        border-radius: 16px;
+        padding: 18px 22px;
+        color: #ffce6a;
+        background: rgba(255, 206, 106, 0.08);
+        font-size: 27px;
+        font-weight: 700;
+        box-shadow: inset 0 0 24px rgba(255, 206, 106, 0.06);
+      }
+
+      .command::before {
+        content: ">";
+        color: #63f08a;
+      }
+
+      .metric-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+
+      .metric {
+        display: flex;
+        min-width: 148px;
+        flex-direction: column;
+        gap: 4px;
+        border: 1px solid rgba(142, 178, 204, 0.22);
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: rgba(11, 36, 64, 0.76);
+      }
+
+      .metric strong {
+        color: #f2f6ee;
+        font-size: 32px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric span {
+        color: #8eb2cc;
+        font-size: 17px;
+      }
+
+      .chip-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        border: 1px solid rgba(99, 240, 138, 0.34);
+        border-radius: 999px;
+        padding: 10px 15px;
+        color: #dfffe7;
+        background: rgba(99, 240, 138, 0.08);
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .visual-panel {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+      }
+
+      .shot-frame {
+        position: relative;
+        display: flex;
+        width: 100%;
+        max-width: 1120px;
+        height: 742px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid rgba(142, 178, 204, 0.28);
+        border-radius: 22px;
+        background: #0b2440;
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.48),
+          0 0 0 1px rgba(242, 246, 238, 0.04) inset,
+          0 0 60px rgba(99, 240, 138, 0.08);
+      }
+
+      .shot-frame.wide {
+        max-width: 1180px;
+        height: 646px;
+      }
+
+      .shot-frame.tall {
+        max-width: 930px;
+        height: 760px;
+      }
+
+      .shot-frame.final {
+        max-width: 1160px;
+        height: 660px;
+      }
+
+      .shot-frame img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #061a35;
+      }
+
+      .frame-label {
+        position: absolute;
+        left: 22px;
+        top: 18px;
+        z-index: 4;
+        border: 1px solid rgba(99, 240, 138, 0.35);
+        border-radius: 999px;
+        padding: 7px 12px;
+        color: #f2f6ee;
+        background: #020812;
+        font-size: 16px;
+        letter-spacing: 0.03em;
+      }
+
+      .callout {
+        position: absolute;
+        right: 28px;
+        bottom: 56px;
+        z-index: 4;
+        max-width: 410px;
+        border: 1px solid rgba(255, 206, 106, 0.36);
+        border-radius: 18px;
+        padding: 16px 18px;
+        color: #f2f6ee;
+        background: rgba(7, 25, 47, 0.9);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #ffce6a;
+        font-size: 21px;
+      }
+
+      .callout span {
+        color: #c5d7df;
+        font-size: 18px;
+        line-height: 1.42;
+      }
+
+      .route-strip {
+        display: flex;
+        width: 100%;
+        max-width: 520px;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .route-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #dfffe7;
+        font-size: 22px;
+      }
+
+      .route-item::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #63f08a;
+        box-shadow: 0 0 18px rgba(99, 240, 138, 0.7);
+      }
+
+      .outro-card {
+        position: absolute;
+        left: 96px;
+        right: 96px;
+        bottom: 84px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 48px;
+        align-items: end;
+        border-top: 1px solid rgba(142, 178, 204, 0.28);
+        padding-top: 34px;
+      }
+
+      .outro-card h2 {
+        max-width: 1020px;
+        color: #f2f6ee;
+        font-size: 60px;
+        font-weight: 900;
+        line-height: 1.12;
+      }
+
+      .outro-card p {
+        margin-top: 12px;
+        color: #8eb2cc;
+        font-size: 26px;
+      }
+
+      .outro-command {
+        border: 1px solid rgba(99, 240, 138, 0.5);
+        border-radius: 20px;
+        padding: 22px 26px;
+        color: #63f08a;
+        background: rgba(99, 240, 138, 0.09);
+        font-size: 34px;
+        font-weight: 800;
+      }
+
+      .transition {
+        position: absolute;
+        inset: 0;
+        z-index: 80;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .wipe-block {
+        position: absolute;
+        top: 0;
+        width: 17%;
+        height: 100%;
+        background: #0b2440;
+        box-shadow: 0 0 36px rgba(99, 240, 138, 0.12);
+        transform: translateX(-110%);
+      }
+
+      .wipe-block:nth-child(1) {
+        left: 0%;
+        background: #07192f;
+      }
+
+      .wipe-block:nth-child(2) {
+        left: 16.6%;
+      }
+
+      .wipe-block:nth-child(3) {
+        left: 33.2%;
+        background: #0e2c4d;
+      }
+
+      .wipe-block:nth-child(4) {
+        left: 49.8%;
+      }
+
+      .wipe-block:nth-child(5) {
+        left: 66.4%;
+        background: #07192f;
+      }
+
+      .wipe-block:nth-child(6) {
+        left: 83%;
+      }
+
+      .final-fade {
+        position: absolute;
+        inset: 0;
+        z-index: 100;
+        background: #07192f;
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="42"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div class="background-grid" data-layout-ignore></div>
+      <div class="ghost-word" data-layout-ignore aria-hidden="true"></div>
+      <div class="topline">
+        <div class="brand-mark">
+          <span class="brand-dot"></span>
+          <span>rdcfg intro</span>
+        </div>
+        <span class="duration-mark">front-end skills + codegraph</span>
+      </div>
+
+      <section id="scene-1" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">一键准备 AI 编码环境</div>
+          <h1 class="scene-title">前端 skills 与 codegraph 统一安装</h1>
+          <p class="scene-copy">rdcfg 把重复的宿主配置、skills 拷贝和代码图谱初始化，收进一个交互式 CLI 流程。</p>
+          <div class="metric-row">
+            <div class="metric"><strong>5</strong><span>支持宿主</span></div>
+            <div class="metric"><strong>3</strong><span>内置前端 skills</span></div>
+            <div class="metric"><strong>1</strong><span>命令启动</span></div>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame wide">
+            <span class="frame-label">open project terminal</span>
+            <img src="assets/screen-01-open-terminal.png" alt="打开项目并启动终端" />
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-2" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 01</div>
+          <h2 class="scene-title">不用记一串安装步骤</h2>
+          <p class="scene-copy">进入项目目录后，直接用 npx 拉起向导；全局安装后也可以直接运行 rdcfg。</p>
+          <div class="command">npx rdcfg</div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <span class="frame-label">command</span>
+            <img src="assets/screen-02-run-command.png" alt="npx rdcfg 命令启动" />
+            <div class="callout"><strong>入口很短</strong><span>一条命令进入完整安装向导。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-3" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 02</div>
+          <h2 class="scene-title tight">先决定安装作用域</h2>
+          <p class="scene-copy">全局安装适合个人环境；项目级安装可以跟着仓库走，方便团队共享同一套 skills。</p>
+          <div class="chip-row">
+            <span class="chip">全局共享</span>
+            <span class="chip">当前项目</span>
+            <span class="chip">可重复执行</span>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <span class="frame-label">scope</span>
+            <img src="assets/screen-03-scope.png" alt="选择安装作用域" />
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-4" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 03</div>
+          <h2 class="scene-title tight">选择语言与技术方向</h2>
+          <p class="scene-copy">向导会按语言/栈过滤可用能力。前端场景里，Vue、设计、组件库规范能一起装好。</p>
+          <div class="route-strip">
+            <div class="route-item">Frontend</div>
+            <div class="route-item">Python / Go / PHP / Flutter</div>
+            <div class="route-item">后续可继续扩展 skill 包</div>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <span class="frame-label">language</span>
+            <img src="assets/screen-04-language.png" alt="选择语言" />
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-5" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 04</div>
+          <h2 class="scene-title tight">勾选需要的前端 skills</h2>
+          <p class="scene-copy">比如 Element Plus、frontend-design、vue-best-practices，按项目需要组合安装。</p>
+          <div class="chip-row">
+            <span class="chip">Element Plus</span>
+            <span class="chip">Frontend Design</span>
+            <span class="chip">Vue Best Practices</span>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <span class="frame-label">skills</span>
+            <img src="assets/screen-05-skills.png" alt="添加想要的 skills" />
+            <div class="callout"><strong>按需组合</strong><span>每个 skill 都保留自己的 SKILL.md 与引用资料。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-6" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 05</div>
+          <h2 class="scene-title tight">一次选择多个 AI 宿主</h2>
+          <p class="scene-copy">ZCode、Claude Code、Codex CLI、Cursor、Trae 可以同时勾选，减少来回切配置的时间。</p>
+          <div class="metric-row">
+            <div class="metric"><strong>Z</strong><span>ZCode</span></div>
+            <div class="metric"><strong>C</strong><span>Codex / Claude</span></div>
+            <div class="metric"><strong>T</strong><span>Trae / Cursor</span></div>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <span class="frame-label">hosts</span>
+            <img src="assets/screen-06-hosts.png" alt="选择需要安装到的编辑器" />
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-7" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Step 06</div>
+          <h2 class="scene-title tight">顺手连接 codegraph</h2>
+          <p class="scene-copy">rdcfg 可以继续安装/连接 codegraph，让代码图谱 MCP 和当前项目初始化跟 skills 一起完成。</p>
+          <div class="command">install / connect codegraph</div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame tall">
+            <img src="assets/screen-07-codegraph.png" alt="安装 codegraph 代码图谱" />
+            <div class="callout"><strong>一个流程</strong><span>skills 与代码图谱不再分散安装。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-8" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Result</div>
+          <h2 class="scene-title tight">skills 已落到目标目录</h2>
+          <p class="scene-copy">安装完成后，可以在项目或宿主目录看到对应 skill 文件夹，团队协作时也更容易对齐能力清单。</p>
+          <div class="chip-row">
+            <span class="chip">element-plus-vue3</span>
+            <span class="chip">frontend-design</span>
+            <span class="chip">vue-best-practices</span>
+          </div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame final">
+            <span class="frame-label">skills installed</span>
+            <img src="assets/screen-08-skills-success.png" alt="skills 成功安装" />
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-9" class="scene">
+        <div class="copy-panel">
+          <div class="eyebrow">Ready</div>
+          <h2 class="scene-title">代码图谱也初始化完成</h2>
+          <p class="scene-copy">现在，AI 助手既有前端工作流 skills，也能通过 codegraph 更快理解项目结构。</p>
+          <div class="command">rdcfg</div>
+        </div>
+        <div class="visual-panel">
+          <div class="shot-frame final">
+            <span class="frame-label">codegraph initialized</span>
+            <img src="assets/screen-09-codegraph-success.png" alt="codegraph 初始化成功" />
+          </div>
+        </div>
+        <div class="outro-card">
+          <div>
+            <h2>把环境搭建从重复操作，变成一次确认。</h2>
+            <p>rdcfg — 前端 skills 与 codegraph 一键安装 CLI</p>
+          </div>
+          <div class="outro-command mono">npx rdcfg</div>
+        </div>
+      </section>
+
+      <div class="transition" data-layout-ignore>
+        <div class="wipe-block"></div>
+        <div class="wipe-block"></div>
+        <div class="wipe-block"></div>
+        <div class="wipe-block"></div>
+        <div class="wipe-block"></div>
+        <div class="wipe-block"></div>
+      </div>
+      <div class="final-fade"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+
+      const tl = gsap.timeline({ paused: true });
+      const totalDuration = 42;
+      const scenes = [
+        "#scene-1",
+        "#scene-2",
+        "#scene-3",
+        "#scene-4",
+        "#scene-5",
+        "#scene-6",
+        "#scene-7",
+        "#scene-8",
+        "#scene-9",
+      ];
+      const starts = [0.1, 4.55, 9, 13.45, 17.9, 22.35, 26.8, 31.25, 35.7];
+
+      function fromIfPresent(selector, vars, time) {
+        const targets = document.querySelectorAll(selector);
+        if (targets.length > 0) {
+          tl.from(targets, vars, time);
+        }
+      }
+
+      function entrance(selector, time, variant) {
+        tl.set(selector, { opacity: 1, zIndex: 10 }, time);
+
+        const side = variant % 3 === 0 ? -48 : variant % 3 === 1 ? 48 : 0;
+        const lift = variant % 3 === 2 ? 42 : 26;
+
+        fromIfPresent(
+          selector + " .eyebrow",
+          { y: -24, opacity: 0, duration: 0.42, ease: "back.out(1.7)" },
+          time + 0.16,
+        );
+        fromIfPresent(
+          selector + " .scene-title",
+          { x: side, y: lift, opacity: 0, duration: 0.58, ease: "expo.out" },
+          time + 0.26,
+        );
+        fromIfPresent(
+          selector + " .scene-copy",
+          { x: -24, opacity: 0, duration: 0.48, ease: "power3.out" },
+          time + 0.52,
+        );
+        fromIfPresent(
+          selector + " .command, " + selector + " .metric, " + selector + " .chip, " + selector + " .route-item",
+          {
+            y: 22,
+            opacity: 0,
+            duration: 0.38,
+            stagger: 0.075,
+            ease: "circ.out",
+          },
+          time + 0.78,
+        );
+        fromIfPresent(
+          selector + " .shot-frame",
+          {
+            x: variant % 2 === 0 ? 70 : -52,
+            y: variant % 2 === 0 ? 18 : -18,
+            scale: 0.94,
+            opacity: 0,
+            duration: 0.72,
+            ease: "power4.out",
+          },
+          time + 0.34,
+        );
+        fromIfPresent(
+          selector + " .frame-label",
+          { y: -12, opacity: 0, duration: 0.32, ease: "sine.out" },
+          time + 0.94,
+        );
+        fromIfPresent(
+          selector + " .callout",
+          { y: 34, scale: 0.96, opacity: 0, duration: 0.46, ease: "back.out(1.25)" },
+          time + 1.05,
+        );
+      }
+
+      function transition(fromSelector, toSelector, time) {
+        tl.set(".transition", { opacity: 1 }, time);
+        tl.fromTo(
+          ".wipe-block",
+          { xPercent: -112 },
+          {
+            xPercent: 0,
+            duration: 0.32,
+            stagger: 0.04,
+            ease: "power4.inOut",
+          },
+          time,
+        );
+        tl.set(fromSelector, { opacity: 0, zIndex: 1 }, time + 0.42);
+        tl.set(toSelector, { opacity: 1, zIndex: 9 }, time + 0.42);
+        tl.to(
+          ".wipe-block",
+          {
+            xPercent: 112,
+            duration: 0.34,
+            stagger: 0.04,
+            ease: "power3.inOut",
+          },
+          time + 0.56,
+        );
+        tl.set(".transition", { opacity: 0 }, time + 1.18);
+      }
+
+      scenes.forEach((scene, index) => {
+        entrance(scene, starts[index], index);
+        if (index > 0) {
+          transition(scenes[index - 1], scene, starts[index] - 0.72);
+        }
+      });
+
+      tl.from(
+        ".background-grid",
+        { opacity: 0, scale: 1.03, duration: 1.2, ease: "sine.out" },
+        0.1,
+      );
+      tl.to(
+        ".background-grid",
+        {
+          x: 36,
+          y: 22,
+          duration: 8,
+          repeat: Math.floor(totalDuration / 8) - 1,
+          yoyo: true,
+          ease: "sine.inOut",
+        },
+        0.2,
+      );
+      tl.to(
+        ".ghost-word",
+        {
+          x: -36,
+          y: -14,
+          duration: 10,
+          repeat: Math.floor(totalDuration / 10) - 1,
+          yoyo: true,
+          ease: "sine.inOut",
+        },
+        0.4,
+      );
+      tl.from(
+        ".topline",
+        { y: -28, opacity: 0, duration: 0.55, ease: "power3.out" },
+        0.18,
+      );
+      tl.from(
+        "#scene-9 .outro-card",
+        { y: 50, opacity: 0, duration: 0.72, ease: "expo.out" },
+        starts[8] + 1.72,
+      );
+      tl.to(
+        ".final-fade",
+        { opacity: 1, duration: 0.65, ease: "sine.inOut" },
+        41.2,
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
