@@ -18,16 +18,25 @@ export function runList(): void {
     log.warn('未找到内置 skills');
     return;
   }
-  // 按 category 分组
-  const byCat = new Map<string, typeof skills>();
+  // 按 language 分组（语言 > category 双维度）
+  const LANG_LABELS: Record<string, string> = {
+    frontend: '前端', python: 'Python', go: 'Go', php: 'PHP', flutter: 'Flutter',
+  };
+  const byLang = new Map<string, typeof skills>();
   for (const s of skills) {
-    if (!byCat.has(s.category)) byCat.set(s.category, []);
-    byCat.get(s.category)!.push(s);
+    const key = s.language || 'other';
+    if (!byLang.has(key)) byLang.set(key, []);
+    byLang.get(key)!.push(s);
   }
-  for (const [cat, items] of byCat) {
-    console.log(`\n[${cat}]`);
+  // 固定语言顺序
+  const order = ['frontend', 'python', 'go', 'php', 'flutter', 'other'];
+  for (const lang of order) {
+    const items = byLang.get(lang);
+    if (!items || items.length === 0) continue;
+    const label = LANG_LABELS[lang] || lang;
+    console.log(`\n[${label}]`);
     for (const s of items) {
-      console.log(`  ${s.name}${installMark(s.name)}`);
+      console.log(`  ${s.name} (${s.category})${installMark(s.name)}`);
       if (s.description) console.log(`    ${s.description}`);
     }
   }
