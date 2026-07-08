@@ -87,6 +87,13 @@ describe('E2E: skills + codegraph 全流程（mock codegraph）', () => {
     expect(existsSync(join(home(), '.zcode', 'skills', 'vue-best-practices'))).toBe(false);
   });
 
+  it('新语言 skill（go-project-layout）project 安装正常', () => {
+    const projectCwd = mkdtempSync(join(tmpdir(), 'rdcfg-e2e-go-'));
+    const results = installSkill('go-project-layout', ['zcode'], { scope: 'project', cwd: projectCwd });
+    expect(results.every(r => r.outcome === 'installed')).toBe(true);
+    expect(existsSync(join(projectCwd, '.zcode', 'skills', 'go-project-layout', 'SKILL.md'))).toBe(true);
+  });
+
   it('连接 codegraph 到 zcode + claude，配置已写入', async () => {
     await connectHosts(['zcode', 'claude']);
     const zc = JSON.parse(readFileSync(join(home(), '.zcode', 'cli', 'config.json'), 'utf8'));
