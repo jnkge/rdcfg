@@ -2,25 +2,25 @@ import { run, tryRun } from '../utils/exec.js';
 import { getHost } from '../hosts/index.js';
 import { recordCodegraphCli, recordCodegraphConnect, recordCodegraphDisconnect } from '../skills/manifest.js';
 import { connectZCodeCodegraph, disconnectZCodeCodegraph } from './zcode-adapter.js';
+import { connectTraeCodegraph, disconnectTraeCodegraph } from './trae-adapter.js';
 import { isCliInstalled, getConnectedHosts } from './detector.js';
 import type { HostId } from '../types.js';
 import { log } from '../utils/logger.js';
 
 export const CODEGRAPH_NPM_PKG = '@colbymchenry/codegraph';
 
-/** codegraph install 命令原生支持的宿主 id（不含 zcode） */
-const NATIVE_HOSTS: HostId[] = ['claude', 'codex', 'cursor', 'trae'];
+/** codegraph install 命令原生支持的宿主 id（不含 zcode/trae，二者由 rdcfg 适配） */
+const NATIVE_HOSTS: HostId[] = ['claude', 'codex', 'cursor'];
 
 /**
  * rdcfg hostId → codegraph --target id 映射。
  * codegraph v1.0.1 支持的 target: claude, cursor, codex, opencode, hermes, gemini, antigravity, kiro。
- * trae 在 codegraph 中无对应（会被跳过）。
+ * zcode/trae 由 rdcfg 自己写 MCP 配置（见 zcode-adapter / trae-adapter），不走 codegraph install。
  */
 const HOST_TO_CODEGRAPH_TARGET: Partial<Record<HostId, string>> = {
   claude: 'claude',
   codex: 'codex',
   cursor: 'cursor',
-  // trae: codegraph 不支持，不映射
 };
 
 /**
@@ -148,6 +148,16 @@ export async function connectHosts(hostIds: HostId[]): Promise<{ hostId: HostId;
     }
   }
 
+  // Trae 单独适配（codegraph install 不支持 trae，由 rdcfg 写 MCP 配置）
+  if (requested.has('trae')) {
+    try {
+      await connectTraeCodegraph();
+      results.push({ hostId: 'trae', ok: true, message: '已写入 Trae MCP 配置' });
+    } catch (e: any) {
+      results.push({ hostId: 'trae', ok: false, message: `Trae 适配失败: ${e?.message || e}` });
+    }
+  }
+
   // 记录成功的到 manifest
   const okHosts = results.filter(r => r.ok).map(r => r.hostId);
   if (okHosts.length > 0) {
@@ -179,9 +189,12 @@ export async function initProject(cwd: string = process.cwd()): Promise<{ ok: bo
  * 卸载 codegraph：解绑所有宿主（含 ZCode）+ npm uninstall -g。
  */
 export async function uninstallCodegraph(hostIds: HostId[]): Promise<{ ok: boolean; message: string }> {
-  // 1. 解绑 ZCode（rdcfg 写的，rdcfg 撤）
+  // 1. 解绑 ZCode 和 Trae（rdcfg 写的，rdcfg 撤）
   if (hostIds.includes('zcode')) {
     try { await disconnectZCodeCodegraph(); } catch { /* 忽略 */ }
+  }
+  if (hostIds.includes('trae')) {
+    try { await disconnectTraeCodegraph(); } catch { /* 忽略 */ }
   }
   // 2. 原生宿主由 codegraph preuninstall 钩子清理，但显式记录
   recordCodegraphDisconnect(hostIds);

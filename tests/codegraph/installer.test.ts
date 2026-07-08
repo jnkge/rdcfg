@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { join } from 'node:path';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { useTmpHome } from '../helpers/tmp-home.js';
-import { home } from '../../src/utils/platform.js';
+import { home, appData } from '../../src/utils/platform.js';
 import { readFileText, pathExists } from '../../src/utils/fs.js';
 
 useTmpHome();
@@ -44,11 +44,14 @@ describe('codegraph installer（mock exec）', () => {
     expect(tryRunMock).toHaveBeenCalledWith('codegraph', ['install', '-y', '--target', 'claude,cursor']);
   });
 
-  it('connectHosts 含 codegraph 不支持的宿主（trae）时跳过', async () => {
+  it('connectHosts 含 trae 时通过 adapter 写入 MCP 配置', async () => {
     const results = await connectHosts(['trae']);
     const traeResult = results.find(r => r.hostId === 'trae');
-    expect(traeResult?.ok).toBe(false);
-    expect(traeResult?.message).toContain('不支持');
+    expect(traeResult?.ok).toBe(true);
+    // 验证 Trae 配置已写入（写第一个变体 Trae CN）
+    const cfgPath = join(appData(), 'Trae CN', 'User', 'mcp.json');
+    const obj = JSON.parse(readFileText(cfgPath));
+    expect(obj.mcpServers.codegraph).toEqual({ command: 'codegraph', args: ['serve', '--mcp'] });
   });
 
   it('uninstallCodegraph 移除 ZCode 条目', async () => {
