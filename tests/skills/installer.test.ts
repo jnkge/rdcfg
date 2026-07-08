@@ -18,7 +18,7 @@ function makeSkill(work: string, opts: { projectSkills?: boolean } = {}): { skil
   const cwd = join(work, 'fake-project');
   mkdirSync(cwd, { recursive: true });
   const skill: Skill = {
-    name: 'my-skill', description: 'd', category: 'x', source: '', dir: skillDir,
+    name: 'my-skill', description: 'd', category: 'x', language: 'frontend', source: '', dir: skillDir,
   };
   const host: Host = {
     id: 'zcode', displayName: 'Z', skillsDir: join(home(), '.zcode', 'skills'),
