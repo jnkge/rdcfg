@@ -3,7 +3,7 @@ import { installSkill } from '../skills/installer.js';
 import { recordSkillInstall } from '../skills/manifest.js';
 import { getAvailableHosts, allHosts } from '../hosts/index.js';
 import { installAll } from '../codegraph/installer.js';
-import { selectSkills, selectHosts, selectScope, confirmCodegraph, confirmInitProject, intro, outro, cancel } from '../ui/prompts.js';
+import { selectSkills, selectHosts, selectScope, selectLanguage, confirmCodegraph, confirmInitProject, intro, outro, cancel } from '../ui/prompts.js';
 import { log } from '../utils/logger.js';
 import type { HostId, Scope } from '../types.js';
 
@@ -14,8 +14,13 @@ export async function runWizard(): Promise<void> {
   const scope: Scope | null = await selectScope();
   if (scope === null) return cancel('已取消');
 
-  // 1. skills 选择
-  const skills = listSkills();
+  // 0.5 选择语言
+  const language = await selectLanguage();
+  if (language === null) return cancel('已取消');
+
+  // 1. skills 选择（按语言过滤）
+  const skills = listSkills().filter(s => s.language === language);
+  if (skills.length === 0) return cancel(`该语言（${language}）暂无 skills，敬请期待`);
   const selectedSkills = await selectSkills(skills);
   if (selectedSkills === null) return cancel('已取消');
 
