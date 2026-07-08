@@ -37,9 +37,18 @@ describe('codegraph installer（mock exec）', () => {
     expect(obj.mcp.servers.codegraph).toEqual({ command: 'codegraph', args: ['serve', '--mcp'] });
   });
 
-  it('connectHosts 原生宿主调 codegraph install', async () => {
+  it('connectHosts 原生宿主调 codegraph install（非交互 -y --target）', async () => {
     const results = await connectHosts(['claude', 'cursor']);
     expect(results.every(r => r.ok)).toBe(true);
+    // 验证传了非交互参数：install -y --target claude,cursor
+    expect(tryRunMock).toHaveBeenCalledWith('codegraph', ['install', '-y', '--target', 'claude,cursor']);
+  });
+
+  it('connectHosts 含 codegraph 不支持的宿主（trae）时跳过', async () => {
+    const results = await connectHosts(['trae']);
+    const traeResult = results.find(r => r.hostId === 'trae');
+    expect(traeResult?.ok).toBe(false);
+    expect(traeResult?.message).toContain('不支持');
   });
 
   it('uninstallCodegraph 移除 ZCode 条目', async () => {

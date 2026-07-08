@@ -12,6 +12,18 @@ export const CODEGRAPH_NPM_PKG = '@colbymchenry/codegraph';
 const NATIVE_HOSTS: HostId[] = ['claude', 'codex', 'cursor', 'trae'];
 
 /**
+ * rdcfg hostId → codegraph --target id 映射。
+ * codegraph v1.0.1 支持的 target: claude, cursor, codex, opencode, hermes, gemini, antigravity, kiro。
+ * trae 在 codegraph 中无对应（会被跳过）。
+ */
+const HOST_TO_CODEGRAPH_TARGET: Partial<Record<HostId, string>> = {
+  claude: 'claude',
+  codex: 'codex',
+  cursor: 'cursor',
+  // trae: codegraph 不支持，不映射
+};
+
+/**
  * 根据 npm/系统错误特征给出针对性建议。
  * 匹配 stdout+stderr 合并文本，命中即返回提示（多条件时取首个）。
  */
@@ -91,19 +103,37 @@ export async function connectHosts(hostIds: HostId[]): Promise<{ hostId: HostId;
   const results: { hostId: HostId; ok: boolean; message: string }[] = [];
   const requested = new Set(hostIds);
 
-  // 原生宿主批量交给 codegraph install
+  // 原生宿主批量交给 codegraph install（非交互模式）
   const nativeRequested = hostIds.filter(id => NATIVE_HOSTS.includes(id));
   if (nativeRequested.length > 0) {
-    const r = await tryRun('codegraph', ['install']);
-    if (r.success) {
-      for (const id of nativeRequested) {
-        results.push({ hostId: id, ok: true, message: '已通过 codegraph install 连接' });
+    // 映射到 codegraph 认识的 target id；codegraph 不支持的宿主（如 trae）会被跳过
+    const targets = nativeRequested
+      .map(id => HOST_TO_CODEGRAPH_TARGET[id])
+      .filter((t): t is string => Boolean(t));
+
+    if (targets.length > 0) {
+      // -y: 非交互（--location=global --target=auto）；--target: 精确指定只装选中的
+      const r = await tryRun('codegraph', ['install', '-y', '--target', targets.join(',')]);
+      if (r.success) {
+        for (const id of nativeRequested) {
+          if (HOST_TO_CODEGRAPH_TARGET[id]) {
+            results.push({ hostId: id, ok: true, message: '已通过 codegraph install 连接' });
+          } else {
+            // codegraph 不支持的宿主（如 trae）
+            results.push({ hostId: id, ok: false, message: 'codegraph 不支持此宿主，已跳过' });
+          }
+        }
+      } else {
+        // 失败时把完整输出贴到每个原生宿主上（codegraph install 一次操作所有原生宿主，无法逐个定位）
+        const detail = formatRunFailure(r.stdout, r.stderr, r.exitCode);
+        for (const id of nativeRequested) {
+          results.push({ hostId: id, ok: false, message: `codegraph install 失败: ${detail}` });
+        }
       }
     } else {
-      // 失败时把完整输出贴到每个原生宿主上（codegraph install 一次操作所有原生宿主，无法逐个定位）
-      const detail = formatRunFailure(r.stdout, r.stderr, r.exitCode);
+      // 所有原生宿主都不被 codegraph 支持（如只选了 trae）
       for (const id of nativeRequested) {
-        results.push({ hostId: id, ok: false, message: `codegraph install 失败: ${detail}` });
+        results.push({ hostId: id, ok: false, message: 'codegraph 不支持此宿主，已跳过' });
       }
     }
   }
