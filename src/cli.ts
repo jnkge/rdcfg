@@ -27,9 +27,10 @@ program
   .option('-H, --hosts <ids>', '目标宿主，逗号分隔（zcode,claude,codex,cursor,trae）')
   .option('-f, --force', '覆盖已修改的 skill')
   .option('-p, --project', '装入当前项目目录（默认装到全局 ~/.xxx/skills）')
-  .action(async (skills: string[], opts: { hosts?: string; force?: boolean; project?: boolean }) => {
+  .option('-l, --language <lang>', '按语言过滤（frontend,python,go,php,flutter）')
+  .action(async (skills: string[], opts: { hosts?: string; force?: boolean; project?: boolean; language?: string }) => {
     const hostIds = opts.hosts ? opts.hosts.split(',').map(s => s.trim()) as HostId[] : undefined;
-    await runAdd(skills, { hosts: hostIds, force: opts.force, scope: opts.project ? 'project' : 'global' });
+    await runAdd(skills, { hosts: hostIds, force: opts.force, scope: opts.project ? 'project' : 'global', language: opts.language });
   });
 
 program
